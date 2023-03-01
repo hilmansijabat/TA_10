@@ -3,3 +3,11 @@ env/
 .env
 .idea
 db.sqlite3
+.vscode
+
+*.log
+*.pot
+*.pyc
+__pycache__
+db.sqlite3
+media

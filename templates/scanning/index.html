@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'scanning/index.css' %}"/>
+</head>
+<body>
+<div>
+    <video autoplay="true" width="200px" id="video-webcam"></video>
+    <button id="btn-take">TAKE PICTURE</button>
+</div>
+<script src="{% static 'scanning/index.js' %}"></script>
+</body>
+</html>

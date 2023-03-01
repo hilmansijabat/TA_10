@@ -9,3 +9,8 @@ def index(request):
         "name": "Andree Panjaitan",
     }
     return render(request, 'scanning/index.html', context)
+
+
+def scanning_request(request):
+    context = {}
+    return render(request, 'scanning/scanning.html', context)

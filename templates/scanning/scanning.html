@@ -3,11 +3,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <link href="{% static 'scanning/scanning.css' %}" rel="stylesheet">
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'scanning/scanning.css' %}"/>
 </head>
-<body>
 
+<body>
+    <div>
+        <video autoplay="true" width="200px" id="video-webcam"></video>
+        <button id="btn-take">TAKE PICTURE</button>
+    </div>
 <script src="{% static 'scanning/scanning.js' %}"></script>
 </body>
 </html>

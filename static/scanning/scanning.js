@@ -84,33 +84,52 @@ function callTimer() {
                     console.log(typeof (blob)) //let you have 'blob' here
                     let fileOfBlob = new File([blob], `${getMachineId()}-${takePicture}.png`);
                     form.append(`image_${takePicture}`, fileOfBlob);
-
+                    textNext.classList.remove("hide");
+                        textNext.innerHTML = `We done take the picture and compute the size it..`;
                     if (takePicture === maxTakePicture) {
                         axios.defaults.xsrfCookieName = 'csrftoken'
                         axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
-                        axios.post("http://localhost:8000/scanning/process", form).then(function (response) {
+                        axios.post("/scanning/process", form).then(function (response) {
                             console.log(response)
+                            localStorage.setItem("last-result", JSON.stringify(response.data));
+                            window.location.href = "/scanning/detail/";
                             // do whatever you want if console is [object object] then stringify the response
                         })
+                    } else if (takePicture === 1) {
+                        textNext.classList.remove("hide");
+                        textNext.innerHTML = `We done take the picture and identification it..`;
+                        axios.defaults.xsrfCookieName = 'csrftoken'
+                        axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+                        axios.post("/scanning/predict", form).then(function (response) {
+                            console.log(response)
+                            // do whatever you want if console is [object object] then stringify the response
+                            if (response.data.data !== "bottle_plastic") {
+                                result.innerHTML = "";
+                                counterCount = 0;
+                                takePicture = 0;
+                                form = new FormData();
+                                textNext.innerHTML = "It's not bottle plastic"
+                                btnTakePicture.innerHTML = "Try Again"
+                                btnTakePicture.classList.remove("hide")
+                                textNumberCount.classList.add("hide")
+                            } else if (takePicture < maxTakePicture) {
+                                textNext.classList.remove("hide");
+                                textNext.innerHTML = `We will take the next picture.`;
+                                setTimeout(() => {
+                                    textNext.classList.add("hide");
+                                    callTimer();
+                                }, 2000);
+                            } else {
+                                textNext.classList.remove("hide");
+                                textNext.innerHTML = `We done take the picture and process it..`;
+                            }
+                        })
                     }
+                    // render hasil dari canvas ke elemen img
+                    img.src = canvas.toDataURL('image/png');
+                    result.appendChild(img);
 
                 }, 'image/png', 1);
-                // render hasil dari canvas ke elemen img
-                img.src = canvas.toDataURL('image/png');
-
-                result.appendChild(img);
-
-                if (takePicture < maxTakePicture) {
-                    textNext.classList.remove("hide");
-                    textNext.innerHTML = `We will take the next picture.`;
-                    setTimeout(() => {
-                        textNext.classList.add("hide");
-                        callTimer();
-                    }, 2000);
-                } else {
-                    textNext.classList.remove("hide");
-                    textNext.innerHTML = `We done take the picture and process it..`;
-                }
             }, 1000)
         }
     }, 1000);

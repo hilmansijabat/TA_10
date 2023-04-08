@@ -9,6 +9,22 @@ import cv2 as cv
 import imutils
 from scipy.spatial import distance as dist
 from imutils import perspective
+from fastai.vision import *
+from fastai.metrics import error_rate, accuracy
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim import lr_scheduler
+from torch.autograd import Variable
+import numpy as np
+import zipfile
+
+import matplotlib.pyplot as plt
+import time
+import os
+
+from fastai.vision.data import ImageDataLoaders
+from fastai.vision.all import *
 
 pixelsPerMetric = 388.436418923784
 
@@ -32,12 +48,13 @@ def detail(request):
 
 
 def scanning_process(request):
-    data = []
-    response = {
-        "data": data
-    }
+    data = {}
+    response = {}
     if request.method == 'POST':
         count = 1
+        width = 0
+        height = 0
+        length = 0
         for key in request.FILES:
             file = request.FILES[key]
             name = file.name
@@ -46,18 +63,36 @@ def scanning_process(request):
             output = remove(input)
             path = os.path.abspath(settings.BASE_DIR) + settings.STATIC_URL + "temp/file-" + splitter[0] + "-" + str(
                 count) + ".png"
+            path_save = os.path.abspath(settings.BASE_DIR) + settings.STATIC_URL + "temp_count/file-" + splitter[0] + "-" + str(
+                count) + ".png"
             output.save(path)
-            size_a, size_b = start_count_width_height(path)
-            data.append(size_a)
-            data.append(size_b)
+            size_a, size_b = start_count_width_height(path, path_save)
+            if count == 1:
+                height = size_b
+                if size_a > size_b:
+                    height= size_a
+            else:
+                width = size_a
+                length = size_b
+            data["file_" + str(count)] = {
+                "access_file" : settings.STATIC_URL + "temp/file-" + splitter[0] + "-" + str(count) + ".png",
+                "count_file": settings.STATIC_URL + "temp_count/file-" + splitter[0] + "-" + str(count) + ".png",
+            }
             count += 1
+        data["size"] = {
+            "width": width,
+            "length": length,
+            "height": height,
+            "volume": width * length * height,
+        }
+        data["price"]= "Rp.10.000,00"
     response = {
         "data": data
     }
     return JsonResponse(response)
 
 
-def start_count_width_height(path):
+def start_count_width_height(path, path_save):
     img = cv.imread(path, cv.IMREAD_GRAYSCALE)
     assert img is not None, "file could not be read, check with os.path.exists()"
     ret, thresh = cv.threshold(img, 127, 255, 0)
@@ -126,7 +161,7 @@ def start_count_width_height(path):
     cv.putText(orig, "{:.1f}in".format(dimB),
                (int(trbrX + 10), int(trbrY)), cv.FONT_HERSHEY_SIMPLEX,
                0.65, (255, 255, 255), 2)
-
+    cv.imwrite(path_save, orig)
     size_a = 2.54 * dimA  # cm
     size_b = 2.54 * dimB  # cm
     return size_a, size_b
@@ -134,3 +169,21 @@ def start_count_width_height(path):
 
 def midpoint(ptA, ptB):
     return (ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5
+
+
+def handle_uploaded_file(f):
+    with open("some/file/name.txt", "wb+") as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+
+
+def scanning_image(request):
+    response = {}
+    if request.method == 'POST':
+        count = 1
+        file = request.FILES["image_1"]
+        path = os.path.abspath(settings.BASE_DIR) + settings.STATIC_URL + "model/export3.pkl"
+        loaded_model = load_learner(path)
+        predict = loaded_model.predict(file.read())[0]
+        response["data"] = predict
+    return JsonResponse(response)

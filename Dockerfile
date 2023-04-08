@@ -1,19 +1,9 @@
-FROM python:3.8-alpine3.16
-
+FROM python:3.9
 ENV PYTHONUNBUFFERED 1
-
-COPY requirements.txt /requirements.txt
-RUN apk add --upgrade --no-cache build-base linux-headers && \
-    pip install --upgrade pip && \
-    pip install -r /requirements.txt
-
-COPY . /app
+RUN mkdir /app
 WORKDIR /app
-
+ADD requirements.txt /app/
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
-RUN adduser --disabled-password --no-create-home django
-
-USER django
-
+RUN pip install -r requirements.txt
+ADD . /app/
 CMD ["uwsgi", "--socket", ":9000", "--workers", "4", "--master", "--enable-threads", "--module", "app.wsgi"]
-
